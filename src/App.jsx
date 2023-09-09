@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import './App.css'
+import confetti from 'canvas-confetti'
 const turns = ['X', 'O']
 const combinationsWin = [
   [0, 1, 2], // Horizontal
@@ -13,28 +14,36 @@ const combinationsWin = [
   [2, 4, 6] // Diagonal
 ]
 
+const defaultBoard = Array(9).fill(null)
 function App () {
-  const [board, setBoard] = useState(Array(9).fill(null))
+  const [board, setBoard] = useState(defaultBoard)
   const [player, setPlayer] = useState(turns[0])
   const [winner, setWinner] = useState(null)
 
-  const checkWinner = () => {
+  const checkWinner = (newBoard) => {
     for (let i = 0; i < combinationsWin.length; i++) {
       const [a, b, c] = combinationsWin[i]
-      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      if (newBoard[a] && newBoard[a] === newBoard[b] && newBoard[a] === newBoard[c]) {
         setWinner(player)
+        confetti()
       }
     }
   }
 
+  const resetGame = () => {
+    setBoard(defaultBoard)
+    setPlayer(turns[0])
+    setWinner(null)
+  }
+
   const handleClickCell = (index) => {
     const newBoard = [...board]
-    if (newBoard[index] !== null) return
-    checkWinner()
     if (winner) return
-    if (newBoard.every(cell => cell !== null)) return
+    if (newBoard[index] !== null) return
     newBoard[index] = player
+    checkWinner(newBoard)
     setBoard(newBoard)
+    if (newBoard.every(cell => cell !== null)) return
     const newPlayer = player === turns[0] ? turns[1] : turns[0]
     setPlayer(newPlayer)
   }
@@ -43,13 +52,29 @@ function App () {
     <>
       <main>
         <h1>TRIKI</h1>
+        <p className='current-player'>Turno de {player}</p>
         <div className='board'>
           {board.map((cell, index) => (
             <div key={index} className='cell' onClick={() => handleClickCell(index)}>
               {cell}
             </div>
           ))}
+
         </div>
+        {winner && (
+            <div className='winner'>
+              <p className='winner-text'>Ganador: {winner}</p>
+              <button className='reset-button' onClick={resetGame }>Reiniciar</button>
+            </div>
+        )}
+        {
+          !winner && board.every(cell => cell !== null) && (
+            <div className='winner'>
+              <p className='winner-text'>Empate</p>
+              <button className='reset-button' onClick={resetGame }>Reiniciar</button>
+            </div>
+          )
+        }
       </main>
     </>
   )
